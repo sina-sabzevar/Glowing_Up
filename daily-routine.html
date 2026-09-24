@@ -83,7 +83,7 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 .slot.done .card ul,.slot.done .card .note{opacity:.55}
 .sets{margin-left:30px;overflow-x:auto}
 .sets table{border-collapse:collapse;font-size:14px;width:100%}
-.sets td{padding:5px 10px 5px 0;border-bottom:1px dashed var(--line);vertical-align:top}
+.sets td{padding:6px 10px 6px 0;border-bottom:1px dashed var(--line);vertical-align:middle}
 .sets td:last-child{font-family:var(--mono);font-size:13px;white-space:nowrap;text-align:right;padding-right:0}
 
 /* reference */
@@ -104,12 +104,39 @@ select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid 
 .fa{font-family:Tahoma,"Vazirmatn","Segoe UI",sans-serif;direction:rtl;unicode-bidi:isolate}
 footer{font-size:13px;color:var(--muted);max-width:75ch}
 
+.fig{width:84px;height:auto;flex:none;overflow:visible;cursor:zoom-in;background:var(--soft);border-radius:8px}
+.fig .fg,.fig .fg-far,.fig .pr,.fig .pr-c,.fig .pr-bar,.fig .pr-band,.fig .pr-g,.fig .pr-arrow{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.fig .fg{stroke:var(--ink);stroke-width:4}
+.fig .fg-far{stroke:var(--muted);stroke-width:4;opacity:.55}
+.fig .fg-head{fill:var(--soft);stroke:var(--ink);stroke-width:3.5}
+.fig .fg-body{fill:var(--ink);stroke:var(--ink);stroke-width:3;stroke-linejoin:round}
+.fig .pr,.fig .pr-g{stroke:var(--muted);stroke-width:2}
+.fig .pr-g{opacity:.6}
+.fig .pr-bar{stroke:var(--muted);stroke-width:4}
+.fig .pr-c{stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 2}
+.fig .pr-band{stroke:var(--c-train);stroke-width:2.5}
+.fig .pr-f{fill:var(--line);stroke:var(--muted);stroke-width:1.2}
+.fig .pr-w{fill:var(--c-train)}
+.fig .pr-wo{fill:none;stroke:var(--c-train);stroke-width:3}
+.fig .pr-wall{fill:var(--line);opacity:.45}
+.fig .pr-arrow{stroke:var(--c-train);stroke-width:2}
+.fig .pr-ah{fill:var(--c-train)}
+.fig .ghost{display:none}
+.fig.still .ghost{display:inline;opacity:.3}
+.fig{width:76px}
+.fig.big{width:min(240px,60vw);cursor:zoom-out}
+.ex{display:flex;align-items:center;gap:12px}
+.fig-hint{margin-left:30px;font-size:12.5px;color:var(--muted)}
 @media (max-width:720px){
   .ref{grid-template-columns:minmax(0,1fr)}
   .calc,.out{grid-template-columns:repeat(3,minmax(0,1fr))}
   .slot{grid-template-columns:50px 1fr;gap:10px}
   .slot .time{font-size:13px}
   .day span{display:none}
+  .sets,.fig-hint,.card .note{margin-left:0}
+  .card ul{padding-left:18px}
+  .fig{width:66px}
+  .ex{gap:10px}
 }
 @media (prefers-reduced-motion:reduce){.bar i{transition:none}}
 </style>
@@ -234,6 +261,193 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
 </div>
 
 <script>
+/* ---------- exercise figures: animated stick figures, drawn inline ---------- */
+const FIG = (function(){
+  const R = Math.PI/180;
+  const dir = a => [Math.sin(a*R), Math.cos(a*R)];
+  const add = (p,v,k) => [p[0]+v[0]*k, p[1]+v[1]*k];
+  const f1 = n => Math.round(n*10)/10;
+  const ln = (a,b,cls) => `<line x1="${f1(a[0])}" y1="${f1(a[1])}" x2="${f1(b[0])}" y2="${f1(b[1])}" class="${cls}"/>`;
+  const pl = (pts,cls) => `<polyline points="${pts.map(p=>f1(p[0])+","+f1(p[1])).join(" ")}" class="${cls}"/>`;
+
+  function side(p){
+    const hip = [p.x,p.y], td = dir(p.t), sh = add(hip,td,26);
+    const hv = dir(p.ha ?? p.t);
+    const head = [sh[0]+hv[0]*9+(p.hd||0), sh[1]+hv[1]*9];
+    const arms = p.a.map(([u,f]) => { const e = add(sh,dir(u),13); return [e, add(e,dir(f),13)]; });
+    const legs = p.l.map(([th,s],i) => {
+      const k = add(hip,dir(th),19), sd = dir(s), an = add(k,sd,19);
+      const ft = (p.ft ? p.ft[i] : 0)*R, fx = sd[1], fy = -sd[0];
+      const fd = [fx*Math.cos(ft)-fy*Math.sin(ft), fx*Math.sin(ft)+fy*Math.cos(ft)];
+      return [k, an, add(an,fd,6)];
+    });
+    const arch = p.arch||0, mid = [(hip[0]+sh[0])/2 + td[1]*arch, (hip[1]+sh[1])/2 - td[0]*arch];
+    let s = "";
+    s += pl([sh,arms[1][0],arms[1][1]],"fg-far") + pl([hip,legs[1][0],legs[1][1],legs[1][2]],"fg-far");
+    s += `<path d="M${f1(hip[0])} ${f1(hip[1])} Q${f1(mid[0])} ${f1(mid[1])} ${f1(sh[0])} ${f1(sh[1])}" class="fg"/>`;
+    s += ln(sh,head,"fg") + `<circle cx="${f1(head[0])}" cy="${f1(head[1])}" r="6" class="fg-head"/>`;
+    s += pl([hip,legs[0][0],legs[0][1],legs[0][2]],"fg") + pl([sh,arms[0][0],arms[0][1]],"fg");
+    return {svg:s, hand:[arms[0][1],arms[1][1]], foot:[legs[0][1],legs[1][1]], hip, sh, head};
+  }
+
+  function front(p){
+    const cx = 60, sy = 24, hy = 48;
+    const shR = [cx+9,sy], shL = [cx-9,sy];
+    const arm = (s,[u,f],m) => { const d1 = dir(u), e = [s[0]+d1[0]*13*m, s[1]+d1[1]*13], d2 = dir(f); return [e,[e[0]+d2[0]*13*m, e[1]+d2[1]*13]]; };
+    const aR = arm(shR,p.a,1), aL = arm(shL,p.a,-1);
+    let s = "";
+    s += ln([cx-5,hy],[cx-6,84],"fg") + ln([cx+5,hy],[cx+6,84],"fg") + ln([cx-6,84],[cx-11,84],"fg") + ln([cx+6,84],[cx+11,84],"fg");
+    s += `<path d="M${cx-9} ${sy} L${cx+9} ${sy} L${cx+5} ${hy} L${cx-5} ${hy} Z" class="fg-body"/>`;
+    s += ln([cx,sy],[cx,sy-4],"fg") + `<circle cx="${cx+(p.hd||0)}" cy="${sy-11}" r="6" class="fg-head"/>`;
+    s += pl([shR,aR[0],aR[1]],"fg") + pl([shL,aL[0],aL[1]],"fg");
+    return {svg:s, hand:[aR[1],aL[1]]};
+  }
+
+  /* props */
+  const G = `<line x1="4" y1="84" x2="116" y2="84" class="pr-g"/>`;
+  const db = j => j.hand.map(h=>`<rect x="${f1(h[0]-5)}" y="${f1(h[1]-2)}" width="10" height="4" rx="1.5" class="pr-w"/>`).join("");
+  const db1 = j => { const a=j.hand[0], b=j.hand[1], h=[(a[0]+b[0])/2,(a[1]+b[1])/2]; return `<rect x="${f1(h[0]-3)}" y="${f1(h[1]-6)}" width="6" height="12" rx="1.5" class="pr-w"/>`; };
+  const plate = r => j => `<circle cx="${f1(j.hand[0][0])}" cy="${f1(j.hand[0][1])}" r="${r}" class="pr-wo"/>`;
+  const cable = (x,y) => j => ln([x,y],j.hand[0],"pr-c") + `<circle cx="${x}" cy="${y}" r="3" class="pr"/>`;
+  const band = j => ln(j.hand[0],j.hand[1],"pr-band");
+  const hipbar = j => `<circle cx="${f1(j.hip[0])}" cy="${f1(j.hip[1]-6)}" r="7" class="pr-wo"/>`;
+  const bar = y => `<line x1="30" y1="${y}" x2="90" y2="${y}" class="pr-bar"/>`;
+  const S = str => () => str;
+
+  const arrow = (x1,y1,x2,y2) => `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="pr-arrow" marker-end="url(#ah)"/>`;
+
+  /* poses: A = start, B = end. angles: 0 = down, 90 = forward (right), 180 = up, -90 = back */
+  const stand = {x:60,y:46,t:180,a:[[5,5],[-5,-5]],l:[[3,-3],[-3,-3]]};
+  const E = {
+    rower:{A:{x:58,y:70,t:150,a:[[80,85],[80,85]],l:[[125,40],[125,40]]},
+           B:{x:45,y:70,t:200,a:[[-30,95],[-30,95]],l:[[90,90],[90,90]]},
+           props:[S(`<line x1="20" y1="76" x2="96" y2="76" class="pr"/><line x1="92" y1="62" x2="92" y2="80" class="pr"/>`),cable(104,70)]},
+    bike:{A:{x:50,y:52,t:160,a:[[110,100],[110,100]],l:[[60,0],[100,30]]},
+          B:{x:50,y:52,t:160,a:[[110,100],[110,100]],l:[[100,30],[60,0]]},
+          props:[S(`<line x1="44" y1="56" x2="60" y2="80" class="pr"/><line x1="84" y1="35" x2="72" y2="82" class="pr"/><line x1="40" y1="56" x2="54" y2="56" class="pr"/><line x1="46" y1="84" x2="90" y2="84" class="pr"/>`)]},
+    treadmill:{A:{x:58,y:44,t:176,a:[[-25,10],[25,70]],l:[[25,5],[-20,-30]]},
+               B:{x:58,y:44,t:176,a:[[25,70],[-25,10]],l:[[-20,-30],[25,5]]},
+               props:[S(`<line x1="20" y1="85" x2="98" y2="80" class="pr"/><line x1="96" y1="80" x2="100" y2="36" class="pr"/><line x1="100" y1="36" x2="80" y2="36" class="pr"/>`)], noG:true},
+    latpulldown:{A:{x:52,y:62,t:176,a:[[175,178],[175,178]],l:[[90,5],[90,5]]},
+                 B:{x:52,y:62,t:190,a:[[-20,150],[-20,150]],l:[[90,5],[90,5]]},
+                 props:[cable(56,-2),S(`<rect x="38" y="64" width="24" height="4" rx="1" class="pr-f"/><line x1="50" y1="68" x2="50" y2="84" class="pr"/><circle cx="74" cy="56" r="3.5" class="pr"/>`)]},
+    cablerow:{A:{x:40,y:66,t:175,a:[[90,90],[90,90]],l:[[88,70],[88,70]]},
+              B:{x:40,y:66,t:188,a:[[-40,90],[-40,90]],l:[[88,70],[88,70]]},
+              props:[cable(104,62),S(`<rect x="26" y="70" width="28" height="4" rx="1" class="pr-f"/><line x1="78" y1="68" x2="78" y2="84" class="pr"/>`)]},
+    facepull:{A:{x:45,y:46,t:178,a:[[110,110],[110,110]],l:[[8,-2],[-8,-6]]},
+              B:{x:45,y:46,t:184,a:[[-95,140],[-95,140]],l:[[8,-2],[-8,-6]]},
+              props:[cable(108,14)]},
+    reardelt:{A:{x:48,y:60,t:180,a:[[90,90],[90,90]],l:[[90,0],[90,0]]},
+              B:{x:48,y:60,t:180,a:[[-80,-80],[-80,-80]],l:[[90,0],[90,0]]},
+              props:[S(`<rect x="36" y="62" width="24" height="4" rx="1" class="pr-f"/><line x1="48" y1="66" x2="48" y2="84" class="pr"/><line x1="100" y1="10" x2="100" y2="84" class="pr"/><rect x="44" y="18" width="4" height="30" rx="1" class="pr-f"/>`)], handles:true},
+    curl:{A:{x:58,y:46,t:180,a:[[0,0],[0,0]],l:[[3,-3],[-3,-3]]},
+          B:{x:58,y:46,t:180,a:[[5,160],[5,160]],l:[[3,-3],[-3,-3]]}, props:[db]},
+    deadhang:{A:{x:60,y:58,t:180,a:[[180,180],[180,180]],l:[[5,-40],[0,-60]]},
+              B:{x:60,y:55,t:180,a:[[178,180],[178,180]],l:[[5,-40],[0,-60]]}, props:[S(bar(6))], noG:true},
+    glutebridge:{A:{x:61,y:78,t:-90,a:[[90,90],[90,90]],l:[[140,10],[140,10]]},
+                 B:{x:58,y:62,t:-60,a:[[110,95],[110,95]],l:[[100,0],[100,0]]}},
+    hipthrust:{A:{x:55,y:76,t:-132,a:[[48,48],[48,48]],l:[[120,20],[120,20]]},
+               B:{x:58,y:57,t:-90,a:[[90,90],[90,90]],l:[[80,5],[80,5]]},
+               props:[S(`<rect x="8" y="62" width="30" height="22" rx="2" class="pr-f"/>`),hipbar]},
+    legcurl:{A:{x:56,y:56,t:90,a:[[25,0],[25,0]],l:[[-90,-90],[-90,-90]]},
+             B:{x:56,y:56,t:90,a:[[25,0],[25,0]],l:[[-90,-165],[-90,-165]]},
+             props:[S(`<rect x="18" y="61" width="78" height="4" rx="1" class="pr-f"/><line x1="30" y1="65" x2="30" y2="84" class="pr"/><line x1="86" y1="65" x2="86" y2="84" class="pr"/>`), j=>`<circle cx="${f1(j.foot[0][0])}" cy="${f1(j.foot[0][1])}" r="3.5" class="pr-wo"/>`]},
+    calfraise:{A:{x:58,y:46,t:180,a:[[0,0],[0,0]],l:[[0,0],[0,0]],ft:[0,0]},
+               B:{x:58,y:42,t:180,a:[[0,0],[0,0]],l:[[0,0],[0,0]],ft:[40,40]},
+               props:[S(`<rect x="60" y="84" width="16" height="6" class="pr-f"/>`),db], noG:true},
+    deadbug:{A:{x:62,y:78,t:-90,a:[[180,180],[180,180]],l:[[180,90],[180,90]]},
+             B:{x:62,y:78,t:-90,a:[[-100,-100],[180,180]],l:[[180,90],[100,100]]}},
+    gobletsquat:{A:{x:63,y:46,t:180,a:[[15,165],[15,165]],l:[[2,-2],[2,-2]]},
+                 B:{x:50,y:63,t:158,a:[[40,170],[40,170]],l:[[80,-15],[80,-15]]}, props:[db1]},
+    rdl:{A:{x:60,y:46,t:180,a:[[0,0],[0,0]],l:[[3,3],[3,3]]},
+         B:{x:50,y:48,t:105,a:[[0,0],[0,0]],l:[[15,16],[15,16]]}, props:[plate(7)]},
+    legpress:{A:{x:40,y:64,t:210,a:[[20,90],[20,90]],l:[[160,60],[160,60]]},
+              B:{x:40,y:64,t:210,a:[[20,90],[20,90]],l:[[120,120],[120,120]]},
+              props:[S(`<line x1="20" y1="36" x2="44" y2="70" class="pr"/><line x1="44" y1="70" x2="44" y2="84" class="pr"/>`), j=>{const f=j.foot[0];return ln([f[0]-6,f[1]-10],[f[0]+6,f[1]+10],"pr-bar")}]},
+    lunge:{A:{x:55,y:46,t:180,a:[[0,0],[0,0]],l:[[15,0],[-15,-15]]},
+           B:{x:55,y:60,t:180,a:[[0,0],[0,0]],l:[[80,0],[-30,-80]]}, props:[db]},
+    backext:{A:{x:56,y:52,t:45,a:[[215,45],[215,45]],l:[[-40,-40],[-40,-40]]},
+             B:{x:56,y:52,t:140,a:[[310,140],[310,140]],l:[[-40,-40],[-40,-40]]},
+             props:[S(`<circle cx="60" cy="58" r="4" class="pr-f"/><line x1="60" y1="62" x2="30" y2="84" class="pr"/><circle cx="31" cy="78" r="3" class="pr-f"/>`)]},
+    kneeraise:{A:{x:60,y:54,t:180,a:[[180,180],[180,180]],l:[[20,5],[20,5]]},
+               B:{x:60,y:54,t:180,a:[[180,180],[180,180]],l:[[150,20],[150,20]]}, props:[S(bar(2))], noG:true},
+    plank:{A:{x:54.5,y:73.4,t:106,a:[[0,90],[0,90]],l:[[-74,-74],[-74,-74]]},
+           B:{x:54.5,y:72,t:104,a:[[0,90],[0,90]],l:[[-75,-75],[-75,-75]]}},
+    inclinepress:{A:{x:45,y:64,t:210,a:[[-10,160],[-10,160]],l:[[90,0],[90,0]]},
+                  B:{x:45,y:64,t:210,a:[[150,150],[150,150]],l:[[90,0],[90,0]]},
+                  props:[S(`<line x1="47" y1="70" x2="22" y2="30" class="pr-bar"/><line x1="36" y1="70" x2="62" y2="70" class="pr-bar"/><line x1="44" y1="70" x2="44" y2="84" class="pr"/>`),db]},
+    shoulderpress:{A:{x:50,y:62,t:180,a:[[-10,170],[-10,170]],l:[[90,0],[90,0]]},
+                   B:{x:50,y:62,t:180,a:[[175,180],[175,180]],l:[[90,0],[90,0]]},
+                   props:[S(`<line x1="44" y1="30" x2="44" y2="68" class="pr-bar"/><line x1="40" y1="68" x2="64" y2="68" class="pr-bar"/><line x1="50" y1="68" x2="50" y2="84" class="pr"/>`),db]},
+    lateralraise:{front:true, A:{a:[10,8]}, B:{a:[88,90]}, props:[db]},
+    csrow:{A:{x:45,y:50,t:125,a:[[0,0],[0,0]],l:[[30,0],[30,0]]},
+           B:{x:45,y:50,t:125,a:[[-100,0],[-100,0]],l:[[30,0],[30,0]]},
+           props:[S(`<line x1="46" y1="58" x2="70" y2="41" class="pr-bar"/><line x1="60" y1="48" x2="64" y2="84" class="pr"/>`),db]},
+    pushdown:{A:{x:45,y:46,t:172,a:[[8,150],[8,150]],l:[[5,-3],[-5,-5]]},
+              B:{x:45,y:46,t:172,a:[[5,5],[5,5]],l:[[5,-3],[-5,-5]]}, props:[cable(80,-2)]},
+    pullapart:{front:true, A:{a:[-30,-150]}, B:{a:[90,90]}, props:[band]},
+    wallangel:{front:true, A:{a:[90,180]}, B:{a:[150,172]}, props:[S(`<rect x="22" y="0" width="76" height="84" class="pr-wall"/>`)]},
+    chintuck:{A:{x:60,y:46,t:180,a:[[5,5],[-5,-5]],l:[[3,-3],[-3,-3]],ha:165,hd:3},
+              B:{x:60,y:46,t:180,a:[[5,5],[-5,-5]],l:[[3,-3],[-3,-3]],ha:180,hd:-3}, props:[S(arrow(86,12,74,12))]},
+    catcow:{A:{x:40,y:64,t:103,a:[[0,0],[0,0]],l:[[0,-90],[0,-90]],arch:9,ha:55},
+            B:{x:40,y:64,t:103,a:[[0,0],[0,0]],l:[[0,-90],[0,-90]],arch:-6,ha:125}},
+    couch:{A:{x:56,y:64,t:172,a:[[40,60],[40,60]],l:[[90,0],[-20,180]]},
+           B:{x:58,y:64,t:186,a:[[40,60],[40,60]],l:[[92,0],[-16,180]]},
+           props:[S(`<rect x="24" y="58" width="22" height="26" rx="2" class="pr-f"/>`)]},
+    doorway:{A:{x:52,y:46,t:180,a:[[-90,180],[-90,180]],l:[[12,0],[-10,-10]]},
+             B:{x:57,y:46,t:168,a:[[-100,180],[-100,180]],l:[[12,0],[-15,-12]]},
+             props:[S(`<rect x="30" y="-4" width="6" height="88" class="pr-f"/>`)]},
+    latstretch:{A:{x:48,y:44,t:125,a:[[120,110],[120,110]],l:[[10,0],[10,0]]},
+                B:{x:42,y:46,t:98,a:[[98,95],[98,95]],l:[[18,0],[18,0]]},
+                props:[S(`<rect x="94" y="-4" width="6" height="88" class="pr-f"/>`)]},
+    thoracic:{A:{x:64,y:79,t:-112,a:[[-100,70],[-100,70]],l:[[150,10],[150,10]],ha:-112},
+              B:{x:64,y:79,t:-104,a:[[-120,50],[-120,50]],l:[[150,10],[150,10]],ha:-60},
+              props:[S(`<circle cx="47" cy="79" r="5" class="pr-f"/>`)]}
+  };
+
+  const cache = {};
+  function draw(key, k){
+    const e = E[key]; if (!e) return "";
+    const pose = e.front ? front(k) : side(k);
+    let s = "";
+    if (!e.noG) s += G;
+    (e.props||[]).forEach(fn => { s += fn(pose); });
+    if (e.handles) s += pose.hand.map(h=>`<circle cx="${f1(h[0])}" cy="${f1(h[1])}" r="2.5" class="pr-w"/>`).join("");
+    return s + pose.svg;
+  }
+  function lerp(A,B,k){
+    if (typeof A === "number") return A + (B-A)*k;
+    if (Array.isArray(A)) return A.map((v,i)=>lerp(v,B[i],k));
+    if (A && typeof A === "object"){ const o = {}; for (const key of new Set([...Object.keys(A),...Object.keys(B)])) o[key] = (key in A && key in B) ? lerp(A[key],B[key],k) : (A[key] ?? B[key]); return o; }
+    return A;
+  }
+  const DEFS = `<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" class="pr-ah"/></marker></defs>`;
+  function svg(key, label){
+    if (!E[key]) return "";
+    return `<svg class="fig" viewBox="0 -6 120 98" role="img" aria-label="${label||key}" data-ex="${key}">${DEFS}<g>${draw(key,E[key].A)}</g><g class="ghost">${draw(key,E[key].B)}</g></svg>`;
+  }
+
+  /* animation loop, only for figures on screen */
+  const visible = new Set();
+  const io = "IntersectionObserver" in window ? new IntersectionObserver(es=>es.forEach(en=>{ en.isIntersecting ? visible.add(en.target) : visible.delete(en.target); })) : null;
+  const reduce = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
+  function watch(root){
+    root.querySelectorAll("svg.fig").forEach(el=>{ if (reduce) el.classList.add("still"); else if (io) io.observe(el); else visible.add(el); });
+  }
+  function ease(x){ return x<.5 ? 2*x*x : 1-Math.pow(-2*x+2,2)/2; }
+  function frame(ts){
+    const T = 2800, p = (ts % T)/T;
+    const k = p < .12 ? 0 : p < .47 ? ease((p-.12)/.35) : p < .62 ? 1 : ease(1-(p-.62)/.38);
+    visible.forEach(el=>{
+      if (!el.isConnected){ visible.delete(el); return; }
+      const e = E[el.dataset.ex]; el.firstElementChild.nextElementSibling.innerHTML = draw(el.dataset.ex, lerp(e.A,e.B,k));
+    });
+    requestAnimationFrame(frame);
+  }
+  if (!reduce) requestAnimationFrame(frame);
+  return {svg, watch, keys:Object.keys(E)};
+})();
+
 (function(){
   const $ = s => document.querySelector(s);
   const store = {
@@ -254,53 +468,53 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
 
   const WORKOUTS = {
     upperA:{title:"Gym · Upper A (pull, for the shoulders)", rows:[
-      ["Warm-up: 5 min rower or bike, then band pull-aparts","2 × 15"],
-      ["Lat pulldown (or assisted pull-up)","4 × 8–10"],
-      ["Seated cable row, squeeze the shoulder blades","4 × 10"],
-      ["Face pull, rope to the forehead","3 × 15"],
-      ["Rear-delt fly (machine or dumbbells)","3 × 15"],
-      ["Dumbbell curl","3 × 10–12"],
-      ["Dead hang from the bar","2 × 20–30 s"],
-      ["Finish: incline treadmill walk","10 min"]]},
+      ["Warm-up: 5 min rower or bike, then band pull-aparts","2 × 15","rower"],
+      ["Lat pulldown (or assisted pull-up)","4 × 8–10","latpulldown"],
+      ["Seated cable row, squeeze the shoulder blades","4 × 10","cablerow"],
+      ["Face pull, rope to the forehead","3 × 15","facepull"],
+      ["Rear-delt fly (machine or dumbbells)","3 × 15","reardelt"],
+      ["Dumbbell curl","3 × 10–12","curl"],
+      ["Dead hang from the bar","2 × 20–30 s","deadhang"],
+      ["Finish: incline treadmill walk","10 min","treadmill"]]},
     lowerA:{title:"Gym · Lower A (glutes, for the pelvic tilt)", rows:[
-      ["Warm-up: 5 min bike, then glute bridges","2 × 12"],
-      ["Goblet squat (or back squat once form is solid)","4 × 8–10"],
-      ["Romanian deadlift, hinge at the hips","3 × 8–10"],
-      ["Hip thrust, 2 s squeeze at the top","4 × 10–12"],
-      ["Lying leg curl","3 × 12"],
-      ["Standing calf raise","3 × 15"],
-      ["Dead bug, lower back pressed to the floor","3 × 10 / side"],
-      ["Finish: incline treadmill walk","10 min"]]},
+      ["Warm-up: 5 min bike, then glute bridges","2 × 12","bike"],
+      ["Goblet squat (or back squat once form is solid)","4 × 8–10","gobletsquat"],
+      ["Romanian deadlift, hinge at the hips","3 × 8–10","rdl"],
+      ["Hip thrust, 2 s squeeze at the top","4 × 10–12","hipthrust"],
+      ["Lying leg curl","3 × 12","legcurl"],
+      ["Standing calf raise","3 × 15","calfraise"],
+      ["Dead bug, lower back pressed to the floor","3 × 10 / side","deadbug"],
+      ["Finish: incline treadmill walk","10 min","treadmill"]]},
     upperB:{title:"Gym · Upper B (push, plus pulling to balance it)", rows:[
-      ["Warm-up: 5 min rower, then band pull-aparts","2 × 15"],
-      ["Incline dumbbell press","4 × 8–10"],
-      ["Seated dumbbell shoulder press","3 × 8–10"],
-      ["Lateral raise, slow on the way down","4 × 12–15"],
-      ["Chest-supported dumbbell row","3 × 10"],
-      ["Triceps rope pushdown","3 × 12"],
-      ["Face pull","2 × 15"],
-      ["Finish: incline treadmill walk","10 min"]]},
+      ["Warm-up: 5 min rower, then band pull-aparts","2 × 15","rower"],
+      ["Incline dumbbell press","4 × 8–10","inclinepress"],
+      ["Seated dumbbell shoulder press","3 × 8–10","shoulderpress"],
+      ["Lateral raise, slow on the way down","4 × 12–15","lateralraise"],
+      ["Chest-supported dumbbell row","3 × 10","csrow"],
+      ["Triceps rope pushdown","3 × 12","pushdown"],
+      ["Face pull","2 × 15","facepull"],
+      ["Finish: incline treadmill walk","10 min","treadmill"]]},
     lowerB:{title:"Gym · Lower B + core", rows:[
-      ["Warm-up: 5 min bike, then couch stretch","30 s / side"],
-      ["Leg press (or trap-bar deadlift 3 × 6–8)","4 × 10–12"],
-      ["Walking lunges with dumbbells","3 × 10 / leg"],
-      ["Hip thrust","3 × 12"],
-      ["Back extension, glutes squeezed","3 × 12"],
-      ["Hanging knee raise, curl the pelvis up","3 × 10–12"],
-      ["Plank, ribs down, glutes tight","3 × 30–45 s"],
-      ["Finish: incline treadmill walk","10 min"]]}
+      ["Warm-up: 5 min bike, then couch stretch","30 s / side","bike"],
+      ["Leg press (or trap-bar deadlift 3 × 6–8)","4 × 10–12","legpress"],
+      ["Walking lunges with dumbbells","3 × 10 / leg","lunge"],
+      ["Hip thrust","3 × 12","hipthrust"],
+      ["Back extension, glutes squeezed","3 × 12","backext"],
+      ["Hanging knee raise, curl the pelvis up","3 × 10–12","kneeraise"],
+      ["Plank, ribs down, glutes tight","3 × 30–45 s","plank"],
+      ["Finish: incline treadmill walk","10 min","treadmill"]]}
   };
 
   const POSTURE = [
-    ["Couch stretch (hip flexor), tuck the pelvis under","2 × 40 s / side"],
-    ["Doorway chest stretch","2 × 40 s"],
-    ["Lat stretch on a door frame or bench","2 × 30 s / side"],
-    ["Thoracic extension over the foam roller","10 reps"],
-    ["Glute bridge, 2 s squeeze","2 × 15"],
-    ["Dead bug","2 × 10 / side"],
-    ["Band pull-apart","2 × 15"],
-    ["Wall angels, lower back touching the wall","2 × 10"],
-    ["Chin tucks","2 × 10"]
+    ["Couch stretch (hip flexor), tuck the pelvis under","2 × 40 s / side","couch"],
+    ["Doorway chest stretch","2 × 40 s","doorway"],
+    ["Lat stretch on a door frame or bench","2 × 30 s / side","latstretch"],
+    ["Thoracic extension over the foam roller","10 reps","thoracic"],
+    ["Glute bridge, 2 s squeeze","2 × 15","glutebridge"],
+    ["Dead bug","2 × 10 / side","deadbug"],
+    ["Band pull-apart","2 × 15","pullapart"],
+    ["Wall angels, lower back touching the wall","2 × 10","wallangel"],
+    ["Chin tucks","2 × 10","chintuck"]
   ];
 
   const isGym = t => t in WORKOUTS;
@@ -326,7 +540,7 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
       note:"Compare these with last week's and the first week's photos, not with the mirror."});
 
     add({id:"wakepost", at: t==="rest" ? 15 : 5, dur:10, cat:"posture", tag:"Posture · 10 min", title:"Wake-up mobility",
-      steps:["Cat-cow on hands and knees × 8","Chin tucks × 10","Band pull-aparts × 15","Couch stretch 30 s each side","Glute bridge × 12"]});
+      rows:[["Cat-cow on hands and knees","× 8","catcow"],["Chin tucks","× 10","chintuck"],["Band pull-aparts","× 15","pullapart"],["Couch stretch","30 s / side","couch"],["Glute bridge","× 12","glutebridge"]]});
 
     add({id:"shower", at:15 + (t==="rest"?10:0), dur:10, cat:"body", tag:"Shower · body", title:"Shower",
       steps:["Lukewarm water, not hot. Hot water dries skin and makes marks look redder.",
@@ -390,7 +604,7 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
       add({id:"gym", at:645, dur:75, cat:"train", tag:"Training · 60–75 min", title:w.title, rows:w.rows,
         note:"Rest 60–90 s between sets. When you hit the top of the rep range on every set, add weight next time. Log every session in your phone's notes."});
       add({id:"postgym", at:720, dur:10, cat:"posture", tag:"Posture · 10 min", title:"Cool-down stretch",
-        steps:["Couch stretch 40 s each side","Doorway chest stretch 40 s","Lat stretch 30 s each side","Thoracic extension on the foam roller × 10"]});
+        rows:[["Couch stretch","40 s / side","couch"],["Doorway chest stretch","40 s","doorway"],["Lat stretch","30 s / side","latstretch"],["Thoracic extension on the foam roller","× 10","thoracic"]]});
       add({id:"shake", at:735, dur:5, cat:"food", tag:"Protein", title:"Whey shake", steps:["1 scoop whey in water or low-fat milk (about 25 g protein)","Quick rinse in the shower if you sweated a lot, with the body wash on the back again for 60 s"]});
     } else if (t === "prep") {
       add({id:"posture", at:645, dur:15, cat:"posture", tag:"Posture · 15 min", title:"Full posture routine", rows:POSTURE});
@@ -483,7 +697,7 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
       const end = it.dur ? `<small>${fmt(wake+it.at+it.dur)}</small>` : "";
       let body = "";
       if (it.steps) body += "<ul>" + it.steps.map(s=>`<li>${s}</li>`).join("") + "</ul>";
-      if (it.rows) body += `<div class="sets"><table><tbody>${it.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</tbody></table></div>`;
+      if (it.rows) body += `<div class="sets"><table><tbody>${it.rows.map(r=>`<tr><td><div class="ex">${FIG.svg(r[2], r[0])}<span>${r[0]}</span></div></td><td>${r[1]}</td></tr>`).join("")}</tbody></table></div><p class="fig-hint">Each figure moves from the start position to the end position. Tap a figure to enlarge it.</p>`;
       if (it.note) body += `<p class="note">${it.note}</p>`;
       const cid = "chk-" + it.id;
       slot.innerHTML = `<div class="time">${fmt(wake+it.at)}${end}</div>
@@ -497,6 +711,7 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
       tl.appendChild(slot);
     });
     progress(items);
+    FIG.watch(tl);
 
     /* week table */
     $("#weekRows").innerHTML = DAYS.map((x,i)=>`<tr${i===sel?' style="font-weight:700"':''}><td>${x.full}</td><td>${x.label}</td><td>${retinolNight(i,phase)?"Retinol":"Azelaic acid"}</td></tr>`).join("");
@@ -508,6 +723,7 @@ footer{font-size:13px;color:var(--muted);max-width:75ch}
     $("#barFill").style.width = (100*done/items.length) + "%";
   }
 
+  $("#timeline").addEventListener("click", e=>{ const f = e.target.closest("svg.fig"); if (f) f.classList.toggle("big"); });
   wakeSel.addEventListener("change", ()=>{ store.set("rb:wake", wakeSel.value); render(); });
   phaseSel.addEventListener("change", ()=>{ store.set("rb:phase", phaseSel.value); render(); });
 
