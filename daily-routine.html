@@ -1,0 +1,532 @@
+<title>The Rebuild Day</title>
+<meta name="description" content="Amir's hour-by-hour daily routine for the 6-month Rebuild plan: skin, food, training, posture and sleep.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#f2f4f3; --surface:#ffffff; --ink:#16201f; --muted:#5b6966; --line:#d9e0de; --soft:#e7ecea;
+  --accent:#0f6b5f; --accent-ink:#ffffff;
+  --c-skin:#a86b12; --c-food:#3f7d2c; --c-train:#2b5fae; --c-posture:#7a4bb0; --c-sleep:#3b4a8c; --c-work:#6b7672; --c-body:#b0473b;
+  --display:"Bricolage Grotesque", "Figtree", system-ui, sans-serif;
+  --body:"Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --bg:#101615; --surface:#18201f; --ink:#e6ecea; --muted:#9aa8a4; --line:#2a3533; --soft:#1f2927;
+    --accent:#4fc1ae; --accent-ink:#0c1413;
+    --c-skin:#e0a84a; --c-food:#7cc062; --c-train:#6f9cea; --c-posture:#b28ae6; --c-sleep:#8d9ae6; --c-work:#9aa6a2; --c-body:#e57d70;
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#101615; --surface:#18201f; --ink:#e6ecea; --muted:#9aa8a4; --line:#2a3533; --soft:#1f2927;
+  --accent:#4fc1ae; --accent-ink:#0c1413;
+  --c-skin:#e0a84a; --c-food:#7cc062; --c-train:#6f9cea; --c-posture:#b28ae6; --c-sleep:#8d9ae6; --c-work:#9aa6a2; --c-body:#e57d70;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;padding:0 16px;padding-block:28px 64px}
+.wrap{max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(30px,5vw,46px);font-weight:800;line-height:1.05}
+h2{font-size:24px;font-weight:800}
+h3{font-size:17px;font-weight:600}
+p{margin:0}
+.muted{color:var(--muted)}
+.eyebrow{font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+header{display:flex;flex-direction:column;gap:10px}
+header p{max-width:64ch}
+
+/* controls */
+.controls{display:flex;flex-wrap:wrap;gap:14px 24px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--muted);font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+select,input[type=number]{font:inherit;font-size:15px;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:7px 10px;min-width:0}
+select:focus-visible,input:focus-visible,button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+.days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.day{font:inherit;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:10px;padding:8px 4px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:0}
+.day b{font-family:var(--display);font-size:15px}
+.day span{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.day[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.day[aria-pressed="true"] span{color:var(--accent-ink);opacity:.85}
+.day .today-dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:0}
+.day.is-today .today-dot{opacity:1}
+
+.summary{display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;padding:14px 18px;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.summary .dtitle{font-family:var(--display);font-size:20px;font-weight:800}
+.bar{flex:1 1 200px;height:8px;background:var(--soft);border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+.count{font-family:var(--mono);font-size:13px;font-variant-numeric:tabular-nums}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:9px;height:9px;border-radius:3px;display:inline-block}
+
+/* timeline */
+.timeline{display:flex;flex-direction:column}
+.slot{display:grid;grid-template-columns:62px 1fr;gap:14px;position:relative}
+.slot .time{font-family:var(--mono);font-weight:700;font-size:14px;padding-top:14px;font-variant-numeric:tabular-nums;text-align:right}
+.slot .time small{display:block;font-weight:500;font-size:11px;color:var(--muted)}
+.card{min-width:0;border-left:3px solid var(--cat);padding:12px 0 16px 16px;display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line)}
+.card-head{display:flex;gap:10px;align-items:flex-start}
+.card-head input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none;cursor:pointer}
+.card-head label{cursor:pointer;display:flex;flex-direction:column;gap:1px;min-width:0}
+.card-head .t{font-weight:700;font-size:16px}
+.tag{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--cat)}
+.card ul{margin:0;padding-left:30px;display:flex;flex-direction:column;gap:3px}
+.card li{color:var(--ink)}
+.card li em{font-style:normal;color:var(--muted)}
+.card .note{margin-left:30px;font-size:13.5px;color:var(--muted);border-left:2px solid var(--line);padding-left:10px}
+.slot.done .card-head .t{text-decoration:line-through;text-decoration-color:var(--muted)}
+.slot.done .card ul,.slot.done .card .note{opacity:.55}
+.sets{margin-left:30px;overflow-x:auto}
+.sets table{border-collapse:collapse;font-size:14px;width:100%}
+.sets td{padding:5px 10px 5px 0;border-bottom:1px dashed var(--line);vertical-align:top}
+.sets td:last-child{font-family:var(--mono);font-size:13px;white-space:nowrap;text-align:right;padding-right:0}
+
+/* reference */
+.ref{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.panel{min-width:0;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:10px}
+.panel.wide{grid-column:1/-1}
+.panel ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.calc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.calc input{width:100%}
+.out{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.out div{background:var(--soft);border-radius:10px;padding:10px 12px}
+.out b{display:block;font-family:var(--mono);font-size:20px;font-variant-numeric:tabular-nums}
+.out span{font-size:12px;color:var(--muted)}
+.tbl{overflow-x:auto}
+.tbl table{border-collapse:collapse;width:100%;font-size:14px;min-width:520px}
+.tbl th,.tbl td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.tbl th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fa{font-family:Tahoma,"Vazirmatn","Segoe UI",sans-serif;direction:rtl;unicode-bidi:isolate}
+footer{font-size:13px;color:var(--muted);max-width:75ch}
+
+@media (max-width:720px){
+  .ref{grid-template-columns:minmax(0,1fr)}
+  .calc,.out{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .slot{grid-template-columns:50px 1fr;gap:10px}
+  .slot .time{font-size:13px}
+  .day span{display:none}
+}
+@media (prefers-reduced-motion:reduce){.bar i{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">The Rebuild · 6-month plan · daily routine</div>
+    <h1>Amir's day, hour by hour</h1>
+    <p class="muted">Every part of the plan placed on the clock: showers, face and body skin care, meals, supplements, gym, posture breaks, walks and sleep. Pick a day of the week and tick items off as you go. Set your wake time and every time on the page moves with it.</p>
+  </header>
+
+  <div class="controls">
+    <div class="field">
+      <label for="wake">Wake time</label>
+      <select id="wake"></select>
+    </div>
+    <div class="field">
+      <label for="phase">Plan week</label>
+      <select id="phase">
+        <option value="1">Weeks 1–2 (starting)</option>
+        <option value="2">Weeks 3–8</option>
+        <option value="3">Week 9 onward</option>
+      </select>
+    </div>
+    <div class="legend" aria-label="Colour key">
+      <span><i style="background:var(--c-skin)"></i>Face</span>
+      <span><i style="background:var(--c-body)"></i>Body &amp; shower</span>
+      <span><i style="background:var(--c-food)"></i>Food</span>
+      <span><i style="background:var(--c-train)"></i>Training &amp; walks</span>
+      <span><i style="background:var(--c-posture)"></i>Posture</span>
+      <span><i style="background:var(--c-work)"></i>Work</span>
+      <span><i style="background:var(--c-sleep)"></i>Sleep</span>
+    </div>
+  </div>
+
+  <nav class="days" id="days" aria-label="Day of week"></nav>
+
+  <div class="summary">
+    <div>
+      <div class="eyebrow" id="dEyebrow"></div>
+      <div class="dtitle" id="dTitle"></div>
+    </div>
+    <div class="bar" aria-hidden="true"><i id="barFill"></i></div>
+    <div class="count" id="count"></div>
+  </div>
+
+  <section class="timeline" id="timeline" aria-label="Timeline"></section>
+
+  <section class="ref">
+    <div class="panel wide">
+      <h2>Your daily numbers</h2>
+      <p class="muted">Enter your own weight, height and age. The example values below are placeholders, not your measurements. The result is a starting point: check the scale after 3 weeks and adjust as the plan says.</p>
+      <div class="calc">
+        <div class="field"><label for="kg">Weight (kg)</label><input id="kg" type="number" min="40" max="200" step="0.5" value="88"></div>
+        <div class="field"><label for="cm">Height (cm)</label><input id="cm" type="number" min="140" max="210" value="175"></div>
+        <div class="field"><label for="age">Age</label><input id="age" type="number" min="16" max="80" value="30"></div>
+      </div>
+      <div class="out">
+        <div><b id="oKcal">–</b><span>kcal per day (≈0.5 kg/week loss)</span></div>
+        <div><b id="oPro">–</b><span>grams protein per day</span></div>
+        <div><b id="oMeal">–</b><span>grams protein per meal (×4)</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>The week</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Day</th><th>Training</th><th>Night skin</th></tr></thead>
+        <tbody id="weekRows"></tbody>
+      </table></div>
+      <p class="muted">The week starts on Saturday, with Friday as the full rest day. Gym days are never back-to-back for the same muscles.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Rules that make the day work</h2>
+      <ul>
+        <li><b>Laptop off the floor.</b> In your photos it sits on the floor mattress. Put it on a table or stand at eye level, with a separate keyboard. This matters more than any single exercise.</li>
+        <li><b>Two 1.5 L bottles.</b> Finish one by 13:00 and the other by 19:00. Then you never have to count glasses.</li>
+        <li><b>Phone alarm every 2 hours</b> labelled "ribs down, chin back, glutes on".</li>
+        <li><b>Pack tomorrow tonight:</b> gym bag, lunch box and a clean shirt. Mornings are then only follow-through.</li>
+        <li><b>Miss one item, not two.</b> A skipped walk is fine. Two skipped days in a row is where plans die.</li>
+      </ul>
+    </div>
+
+    <div class="panel">
+      <h2>What the photos show, and what each fix targets</h2>
+      <ul>
+        <li><b>Side view:</b> belly pushed forward with an arched lower back. Targeted by the deficit, daily walking, glute work and the hip-flexor stretch.</li>
+        <li><b>Shoulders and head:</b> slightly forward. Targeted by rows, face pulls, pull-aparts and chin tucks.</li>
+        <li><b>Back:</b> scattered small dark marks from old bumps. Targeted by the benzoyl peroxide wash each morning, azelaic acid at night, no picking and sunscreen on skin that sees sun.</li>
+        <li><b>Face:</b> dark under-eyes, a reddish mark on the left cheek, visible pores on the nose. Targeted by 7.5–8 h sleep, SPF 50, niacinamide, retinol and azelaic acid.</li>
+      </ul>
+      <p class="muted">Posture work helps how you stand and look, but results vary between people. Expect gradual change over months rather than a fixed number of centimetres.</p>
+    </div>
+
+    <div class="panel">
+      <h2>Additions to the shopping list</h2>
+      <ul>
+        <li><b>Azelaic acid 10–20% cream or gel</b> from a pharmacy (<span class="fa">آزلائیک اسید</span>). Use it on the back marks and on the cheek mark.</li>
+        <li><b>White towels and a few white T-shirts to sleep in.</b> Benzoyl peroxide bleaches coloured fabric.</li>
+        <li><b>Two 1.5 L water bottles</b></li>
+        <li><b>Laptop stand or a table</b> and a cheap separate keyboard</li>
+        <li>Check every brand from the original list on Digikala or at a pharmacy before buying. Some names in the PDF may be wrong.</li>
+      </ul>
+    </div>
+
+    <div class="panel wide">
+      <h2>Retinol ramp</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Plan week</th><th>Retinol nights</th><th>Other nights</th><th>If skin stings or peels</th></tr></thead>
+        <tbody>
+          <tr><td>1–2</td><td>Saturday, Tuesday</td><td>Azelaic acid + moisturiser</td><td>Skip retinol for 2 nights, moisturiser only</td></tr>
+          <tr><td>3–8</td><td>Saturday, Monday, Wednesday</td><td>Azelaic acid + moisturiser</td><td>Go back one step for a week</td></tr>
+          <tr><td>9+</td><td>Every other night (Sat, Mon, Wed, Fri)</td><td>Azelaic acid + moisturiser</td><td>Stay at the level you tolerate. More is not better.</td></tr>
+        </tbody>
+      </table></div>
+      <p class="muted">Pea-sized amount of retinol for the whole face, on dry skin, avoiding the eye corners and the nose creases. Never use it on the same night as an exfoliating acid.</p>
+    </div>
+  </section>
+
+  <footer>This is general wellness guidance, not medical advice. Check with a doctor before a new diet or training plan. If the under-eye darkness doesn't improve after a month of good sleep, ask them about iron and allergies. See a dermatologist for any mark that is raised, pitted, changing, or not fading after 3 months. Creatine usually adds 1–2 kg of water weight in the first 2–3 weeks. That is not fat, so judge fat loss from week 4 onward and from the waist measurement.</footer>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const store = {
+    get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+  };
+
+  /* Iranian week: Saturday first. index 0..6 = Sat..Fri */
+  const DAYS = [
+    {n:"Sat", full:"Saturday", type:"upperA", label:"Upper A · pull"},
+    {n:"Sun", full:"Sunday", type:"lowerA", label:"Lower A · glutes"},
+    {n:"Mon", full:"Monday", type:"active", label:"Walk + posture"},
+    {n:"Tue", full:"Tuesday", type:"upperB", label:"Upper B · push"},
+    {n:"Wed", full:"Wednesday", type:"lowerB", label:"Lower B · core"},
+    {n:"Thu", full:"Thursday", type:"prep", label:"Walk + meal prep"},
+    {n:"Fri", full:"Friday", type:"rest", label:"Rest + review"}
+  ];
+
+  const WORKOUTS = {
+    upperA:{title:"Gym · Upper A (pull, for the shoulders)", rows:[
+      ["Warm-up: 5 min rower or bike, then band pull-aparts","2 × 15"],
+      ["Lat pulldown (or assisted pull-up)","4 × 8–10"],
+      ["Seated cable row, squeeze the shoulder blades","4 × 10"],
+      ["Face pull, rope to the forehead","3 × 15"],
+      ["Rear-delt fly (machine or dumbbells)","3 × 15"],
+      ["Dumbbell curl","3 × 10–12"],
+      ["Dead hang from the bar","2 × 20–30 s"],
+      ["Finish: incline treadmill walk","10 min"]]},
+    lowerA:{title:"Gym · Lower A (glutes, for the pelvic tilt)", rows:[
+      ["Warm-up: 5 min bike, then glute bridges","2 × 12"],
+      ["Goblet squat (or back squat once form is solid)","4 × 8–10"],
+      ["Romanian deadlift, hinge at the hips","3 × 8–10"],
+      ["Hip thrust, 2 s squeeze at the top","4 × 10–12"],
+      ["Lying leg curl","3 × 12"],
+      ["Standing calf raise","3 × 15"],
+      ["Dead bug, lower back pressed to the floor","3 × 10 / side"],
+      ["Finish: incline treadmill walk","10 min"]]},
+    upperB:{title:"Gym · Upper B (push, plus pulling to balance it)", rows:[
+      ["Warm-up: 5 min rower, then band pull-aparts","2 × 15"],
+      ["Incline dumbbell press","4 × 8–10"],
+      ["Seated dumbbell shoulder press","3 × 8–10"],
+      ["Lateral raise, slow on the way down","4 × 12–15"],
+      ["Chest-supported dumbbell row","3 × 10"],
+      ["Triceps rope pushdown","3 × 12"],
+      ["Face pull","2 × 15"],
+      ["Finish: incline treadmill walk","10 min"]]},
+    lowerB:{title:"Gym · Lower B + core", rows:[
+      ["Warm-up: 5 min bike, then couch stretch","30 s / side"],
+      ["Leg press (or trap-bar deadlift 3 × 6–8)","4 × 10–12"],
+      ["Walking lunges with dumbbells","3 × 10 / leg"],
+      ["Hip thrust","3 × 12"],
+      ["Back extension, glutes squeezed","3 × 12"],
+      ["Hanging knee raise, curl the pelvis up","3 × 10–12"],
+      ["Plank, ribs down, glutes tight","3 × 30–45 s"],
+      ["Finish: incline treadmill walk","10 min"]]}
+  };
+
+  const POSTURE = [
+    ["Couch stretch (hip flexor), tuck the pelvis under","2 × 40 s / side"],
+    ["Doorway chest stretch","2 × 40 s"],
+    ["Lat stretch on a door frame or bench","2 × 30 s / side"],
+    ["Thoracic extension over the foam roller","10 reps"],
+    ["Glute bridge, 2 s squeeze","2 × 15"],
+    ["Dead bug","2 × 10 / side"],
+    ["Band pull-apart","2 × 15"],
+    ["Wall angels, lower back touching the wall","2 × 10"],
+    ["Chin tucks","2 × 10"]
+  ];
+
+  const isGym = t => t in WORKOUTS;
+  const works = t => t !== "rest";
+
+  function retinolNight(dayIdx, phase){
+    const sets = {1:[0,3], 2:[0,2,4], 3:[0,2,4,6]};
+    return sets[phase].includes(dayIdx);
+  }
+
+  /* offsets in minutes from wake-up */
+  function buildDay(dayIdx, phase){
+    const d = DAYS[dayIdx], t = d.type, gym = isGym(t), work = works(t);
+    const retinol = retinolNight(dayIdx, phase);
+    const I = [];
+    const add = (o) => I.push(o);
+
+    add({id:"wake", at:0, dur:5, cat:"sleep", tag:"Wake", title:"Up, water, daylight",
+      steps:["Drink 500 ml water straight away (first bottle starts now)","Open the curtains or step outside for 2 minutes of daylight","No phone scrolling in bed. Stand up first."]});
+
+    if (t === "rest") add({id:"photos", at:5, dur:10, cat:"body", tag:"Weekly check", title:"Weigh-in, waist and photos",
+      steps:["After the toilet, before food or water: weigh yourself and write it down","Waist measurement at the navel, relaxed, same spot every week","Four photos: front, side, back and face. Same wall, same light, same distance as your starting photos."],
+      note:"Compare these with last week's and the first week's photos, not with the mirror."});
+
+    add({id:"wakepost", at: t==="rest" ? 15 : 5, dur:10, cat:"posture", tag:"Posture · 10 min", title:"Wake-up mobility",
+      steps:["Cat-cow on hands and knees × 8","Chin tucks × 10","Band pull-aparts × 15","Couch stretch 30 s each side","Glute bridge × 12"]});
+
+    add({id:"shower", at:15 + (t==="rest"?10:0), dur:10, cat:"body", tag:"Shower · body", title:"Shower",
+      steps:["Lukewarm water, not hot. Hot water dries skin and makes marks look redder.",
+             "Benzoyl peroxide or salicylic wash on the back, shoulders and chest. Leave it on for 60 s while you wash the rest, then rinse well.",
+             "Hair: shampoo as needed, conditioner on the ends",
+             "Gel cleanser on the face last, gentle fingers, 30 s, rinse",
+             "Pat dry with a clean white towel (benzoyl peroxide bleaches colours). Don't rub."]});
+
+    add({id:"amskin", at:25 + (t==="rest"?10:0), dur:10, cat:"skin", tag:"Face · morning", title:"Morning face routine",
+      steps:["Niacinamide serum, 2–3 drops, pressed into the whole face",
+             "Light gel moisturiser",
+             "Sunscreen SPF 50: two finger-lengths for the face, plus neck and ears. Every day, even indoors near windows.",
+             "Optional: caffeine eye gel, tapped under the eyes",
+             "Deodorant. Clean cotton shirt."]});
+
+    add({id:"groom", at:35 + (t==="rest"?10:0), dur:7, cat:"skin", tag:"Grooming", title:"Moustache, beard line, hair",
+      steps:["Trim the moustache edge above the lip line; keep the cheek line and neck line clean (neck line about one finger above the Adam's apple)",
+             "Style hair with a small amount of matte product. Keep the sides tidier than the top, which helps the face look leaner."]});
+
+    add({id:"breakfast", at:45 + (t==="rest"?15:0), dur:20, cat:"food", tag:"Meal 1 · breakfast", title:"Protein breakfast + supplements",
+      steps:["3 eggs (omelette or boiled, 1 tsp oil at most)",
+             "1 palm-sized piece of sangak (<span class=\"fa\">نان سنگک</span>), tomato, cucumber, fresh herbs",
+             "Tea or coffee, no sugar",
+             "With food: vitamin D3 (1000–2000 IU) + omega-3",
+             "Creatine 5 g stirred into a glass of water"]});
+
+    if (work) {
+      add({id:"leave", at:75, dur:30, cat:"train", tag:"Steps", title:"Walk part of the commute",
+        steps:["Get off one stop early or park further away: aim for 2,000 steps before work","Fill water bottle 1 (1.5 L) to carry through the morning"]});
+      add({id:"work1", at:105, dur:120, cat:"work", tag:"Work", title:"Focus block 1",
+        steps:["Screen at eye level, feet flat, hips at the back of the chair","Sip water through the block"]});
+      add({id:"reset1", at:225, dur:5, cat:"posture", tag:"Posture break", title:"2-hour reset",
+        steps:["Stand up, ribs down, chin back, glutes gently on for 60 s","10 wall angels or 10 chin tucks","Walk to refill water"]});
+      add({id:"work2", at:230, dur:115, cat:"work", tag:"Work", title:"Focus block 2", steps:["Same setup. If you get hungry, drink water first."]});
+      add({id:"reset2", at:345, dur:5, cat:"posture", tag:"Posture break", title:"2-hour reset", steps:["Doorway chest stretch 40 s","Chin tucks × 10","Bottle 1 should be half done"]});
+      add({id:"lunch", at:375, dur:25, cat:"food", tag:"Meal 2 · lunch", title:"Protein + big salad + controlled rice",
+        steps:["1–1.5 palms of chicken, fish or kabab (<span class=\"fa\">جوجه، ماهی، کباب</span>)",
+               "Half the plate salad or <span class=\"fa\">سبزی خوردن</span>, with lemon rather than a lot of oil",
+               "About 1 cup of cooked rice (half your old portion), brown or <span class=\"fa\">عدس‌پلو</span> if possible",
+               "Water or doogh (<span class=\"fa\">دوغ</span>) with low salt, no soft drinks"]});
+      add({id:"lunchwalk", at:400, dur:10, cat:"train", tag:"Steps", title:"10-minute walk after lunch", steps:["Easy pace, about 1,000 steps. It helps blood sugar and afternoon energy."]});
+      add({id:"work3", at:410, dur:85, cat:"work", tag:"Work", title:"Focus block 3", steps:["Finish bottle 1 by about 13:00, then start bottle 2"]});
+      add({id:"reset3", at:495, dur:5, cat:"posture", tag:"Posture break", title:"2-hour reset", steps:["Standing hip-flexor stretch, 30 s each side","Band pull-aparts × 15 (keep a band at your desk)"]});
+      add({id:"work4", at:500, dur:85, cat:"work", tag:"Work", title:"Focus block 4", steps:["Wrap up and write tomorrow's top 3 tasks, so work stays at work"]});
+    } else {
+      add({id:"longwalk", at:90, dur:60, cat:"train", tag:"Steps", title:"Long easy walk", steps:["45–60 minutes outside, a park or bazaar if you like. Aim for 6,000+ steps before lunch.","Fill water bottle 1 before leaving"]});
+      add({id:"free", at:180, dur:180, cat:"work", tag:"Free time", title:"Family, errands, hobbies", steps:["Stand and move every hour. Rest days still aren't sofa days."]});
+      add({id:"lunch", at:375, dur:40, cat:"food", tag:"Meal 2 · family lunch", title:"The relaxed meal of the week",
+        steps:["Eat the family meal you enjoy, rice and all. Just start with salad and protein first.","One dessert is fine. Enjoy it, then move on."],
+        note:"Planned, not guilty. One relaxed meal does not undo a week."});
+      add({id:"review", at:480, dur:20, cat:"body", tag:"Weekly review", title:"Plan next week",
+        steps:["Compare this morning's photos and numbers with last week","Did lifts go up? Write next week's target weights.","If the weight hasn't moved for 3 weeks: trim portions a little or add 1,500 steps a day",
+               "If you're constantly exhausted or starving: eat a bit more","Check skin: any irritation from retinol? Adjust the plan week above."]});
+    }
+
+    add({id:"snack", at:585, dur:10, cat:"food", tag:"Meal 3 · snack", title: gym ? "Pre-gym snack" : "Afternoon snack",
+      steps:["Low-fat yogurt (<span class=\"fa\">ماست کم‌چرب</span>) + 1 fruit, or a handful of nuts (about 10 almonds or walnuts)", gym ? "Eat this about 60–90 minutes before training" : "Keeps you from arriving at dinner starving"]});
+
+    if (gym) {
+      const w = WORKOUTS[t];
+      add({id:"gym", at:645, dur:75, cat:"train", tag:"Training · 60–75 min", title:w.title, rows:w.rows,
+        note:"Rest 60–90 s between sets. When you hit the top of the rep range on every set, add weight next time. Log every session in your phone's notes."});
+      add({id:"postgym", at:720, dur:10, cat:"posture", tag:"Posture · 10 min", title:"Cool-down stretch",
+        steps:["Couch stretch 40 s each side","Doorway chest stretch 40 s","Lat stretch 30 s each side","Thoracic extension on the foam roller × 10"]});
+      add({id:"shake", at:735, dur:5, cat:"food", tag:"Protein", title:"Whey shake", steps:["1 scoop whey in water or low-fat milk (about 25 g protein)","Quick rinse in the shower if you sweated a lot, with the body wash on the back again for 60 s"]});
+    } else if (t === "prep") {
+      add({id:"posture", at:645, dur:15, cat:"posture", tag:"Posture · 15 min", title:"Full posture routine", rows:POSTURE});
+      add({id:"prep", at:665, dur:75, cat:"food", tag:"Meal prep · 75 min", title:"Cook for the week",
+        steps:["Grill or bake 1.5–2 kg of chicken breast, or make joojeh (<span class=\"fa\">جوجه</span>) with little oil","Cook one pot of lentils or beans (<span class=\"fa\">عدس، لوبیا، نخود</span>)","Cook rice for 3 days and portion it into 1-cup boxes","Wash and dry salad and herbs, boil 10 eggs","Pack 4–5 lunch boxes"],
+        note:"Healthy has to be the easy default, so this one session carries the whole week."});
+    } else if (t === "active") {
+      add({id:"posture", at:645, dur:15, cat:"posture", tag:"Posture · 15 min", title:"Full posture routine", rows:POSTURE});
+      add({id:"walk40", at:665, dur:40, cat:"train", tag:"Steps", title:"Brisk walk, 40 minutes", steps:["Pace: you can talk but not sing","Add a few hills or stairs if they're nearby"]});
+    } else {
+      add({id:"posture", at:645, dur:15, cat:"posture", tag:"Posture · 15 min", title:"Full posture routine", rows:POSTURE});
+    }
+
+    add({id:"dinner", at:795, dur:25, cat:"food", tag:"Meal 4 · dinner", title:"Lighter, earlier dinner",
+      steps:["1 palm of fish, kabab, chicken or a bean stew (<span class=\"fa\">خوراک لوبیا، عدسی</span>)","Big salad, <span class=\"fa\">سبزی</span> or grilled vegetables (<span class=\"fa\">بادمجان، کدو، فلفل</span>)","Little or no rice. A small piece of bread is fine.","Nothing heavy after this. If hungry later: cucumber or a cup of tea."]});
+
+    add({id:"evewalk", at:840, dur:25, cat:"train", tag:"Steps", title:"After-dinner walk, 20–30 min",
+      steps:["Brisk. This usually closes the gap to 8,000–10,000 steps.","Check the step count when you get back"]});
+
+    add({id:"prepnext", at:885, dur:15, cat:"work", tag:"Set up tomorrow", title:"Pack for tomorrow",
+      steps:["Gym bag (if tomorrow is a gym day), lunch box, clean shirt","Finish water bottle 2, then stop big drinks so you don't wake up at night","Screens to night mode"]});
+
+    const nightSteps = [
+      "Cleanse twice: first cleanse removes sunscreen, second cleans the skin. Pat dry and wait 5 minutes until the face is fully dry.",
+      retinol
+        ? "<b>Retinol night:</b> a pea-sized amount for the whole face, avoiding the eye corners and the sides of the nose"
+        : "<b>Azelaic acid night:</b> a thin layer on the cheek mark and any red or brown spots, or the whole face if tolerated",
+      "Moisturiser on top",
+      "<b>Back:</b> azelaic acid on the dark marks you can reach (or ask someone at home). Let it dry before lying down.",
+      "Optional: eye gel. Lip balm.",
+      "Brush and floss teeth"
+    ];
+    add({id:"nightskin", at:930, dur:15, cat:"skin", tag: retinol ? "Face · night · retinol" : "Face · night · azelaic", title:"Night skin routine", steps:nightSteps,
+      note: retinol ? "Never use an exfoliating acid on a retinol night. Mild dryness in the first weeks is normal." : "Don't pick or squeeze anything. Picking turns a small bump into a mark that lasts for months."});
+
+    add({id:"winddown", at:945, dur:30, cat:"sleep", tag:"Wind down", title:"Wind down",
+      steps:["Phone charging outside reach of the bed","5 minutes: couch stretch + slow breathing, 4 s in and 6 s out","Read, or talk to family. Dim lights.","Sleep on your back or side with a pillow between the knees, which is easier on the lower back"]});
+
+    add({id:"sleep", at:975, dur:0, cat:"sleep", tag:"Sleep · 7 h 45 min", title:"Lights out",
+      steps:["Dark, cool room. This is when muscle repairs and the dark under-eyes improve."], note:"Keep the same wake time on Friday too. A steady clock does more for tired eyes than any cream."});
+
+    return I.sort((a,b)=>a.at-b.at);
+  }
+
+  /* ---------- state ---------- */
+  const wakeSel = $("#wake"), phaseSel = $("#phase");
+  for (let m = 5*60+30; m <= 8*60+30; m += 15){
+    const o = document.createElement("option"); o.value = m; o.textContent = fmt(m); wakeSel.appendChild(o);
+  }
+  wakeSel.value = store.get("rb:wake") || String(6*60+45);
+  phaseSel.value = store.get("rb:phase") || "1";
+
+  function fmt(min){ min = ((min % 1440)+1440)%1440; const h = Math.floor(min/60), m = min%60; return String(h).padStart(2,"0")+":"+String(m).padStart(2,"0"); }
+
+  const now = new Date();
+  const todayIdx = (now.getDay() + 1) % 7; // JS Sat=6 -> 0
+  let sel = todayIdx;
+
+  function dateFor(idx){
+    const d = new Date(now); d.setDate(d.getDate() + (idx - todayIdx));
+    return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+  }
+  const key = (idx,id) => "rb:done:" + dateFor(idx) + ":" + id;
+
+  /* day tabs */
+  const daysNav = $("#days");
+  DAYS.forEach((d,i)=>{
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "day" + (i===todayIdx ? " is-today":"");
+    b.innerHTML = `<b>${d.n}</b><span>${d.label}</span><i class="today-dot" aria-hidden="true"></i>`;
+    b.setAttribute("aria-label", d.full + ", " + d.label + (i===todayIdx ? " (today)":""));
+    b.addEventListener("click", ()=>{ sel = i; render(); });
+    daysNav.appendChild(b);
+  });
+
+  function render(){
+    const wake = +wakeSel.value, phase = +phaseSel.value;
+    [...daysNav.children].forEach((b,i)=>b.setAttribute("aria-pressed", i===sel ? "true":"false"));
+    const d = DAYS[sel];
+    $("#dEyebrow").textContent = (sel===todayIdx ? "Today · " : "") + d.full;
+    $("#dTitle").textContent = d.label;
+
+    const items = buildDay(sel, phase);
+    const tl = $("#timeline"); tl.innerHTML = "";
+    items.forEach(it=>{
+      const done = store.get(key(sel,it.id)) === "1";
+      const slot = document.createElement("div");
+      slot.className = "slot" + (done ? " done":"");
+      slot.style.setProperty("--cat", `var(--c-${it.cat})`);
+      const end = it.dur ? `<small>${fmt(wake+it.at+it.dur)}</small>` : "";
+      let body = "";
+      if (it.steps) body += "<ul>" + it.steps.map(s=>`<li>${s}</li>`).join("") + "</ul>";
+      if (it.rows) body += `<div class="sets"><table><tbody>${it.rows.map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td></tr>`).join("")}</tbody></table></div>`;
+      if (it.note) body += `<p class="note">${it.note}</p>`;
+      const cid = "chk-" + it.id;
+      slot.innerHTML = `<div class="time">${fmt(wake+it.at)}${end}</div>
+        <div class="card"><div class="card-head"><input type="checkbox" id="${cid}" ${done?"checked":""}>
+        <label for="${cid}"><span class="tag">${it.tag}</span><span class="t">${it.title}</span></label></div>${body}</div>`;
+      slot.querySelector("input").addEventListener("change", e=>{
+        store.set(key(sel,it.id), e.target.checked ? "1":"0");
+        slot.classList.toggle("done", e.target.checked);
+        progress(items);
+      });
+      tl.appendChild(slot);
+    });
+    progress(items);
+
+    /* week table */
+    $("#weekRows").innerHTML = DAYS.map((x,i)=>`<tr${i===sel?' style="font-weight:700"':''}><td>${x.full}</td><td>${x.label}</td><td>${retinolNight(i,phase)?"Retinol":"Azelaic acid"}</td></tr>`).join("");
+  }
+
+  function progress(items){
+    const done = items.filter(it=>store.get(key(sel,it.id))==="1").length;
+    $("#count").textContent = `${done} / ${items.length} done`;
+    $("#barFill").style.width = (100*done/items.length) + "%";
+  }
+
+  wakeSel.addEventListener("change", ()=>{ store.set("rb:wake", wakeSel.value); render(); });
+  phaseSel.addEventListener("change", ()=>{ store.set("rb:phase", phaseSel.value); render(); });
+
+  /* numbers */
+  ["kg","cm","age"].forEach(id=>{
+    const el = $("#"+id); const v = store.get("rb:"+id); if (v) el.value = v;
+    el.addEventListener("input", ()=>{ store.set("rb:"+id, el.value); calc(); });
+  });
+  function calc(){
+    const kg = +$("#kg").value, cm = +$("#cm").value, age = +$("#age").value;
+    if (!kg || !cm || !age) return;
+    const bmr = 10*kg + 6.25*cm - 5*age + 5;
+    const kcal = Math.round((bmr*1.45 - 500)/50)*50;
+    const pro = Math.round(1.6*kg/5)*5;
+    $("#oKcal").textContent = kcal.toLocaleString("en");
+    $("#oPro").textContent = pro;
+    $("#oMeal").textContent = "≈" + Math.round(pro/4);
+  }
+  calc();
+  render();
+})();
+</script>
